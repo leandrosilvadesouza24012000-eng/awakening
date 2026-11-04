@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SISTEMA: AWAKENING</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 18px;
+  background: #080b12;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+header {
+  text-align: center;
+  padding: 25px 0;
+}
+
+h1 {
+  color: #48d9ff;
+  letter-spacing: 4px;
+  font-size: 27px;
+}
+
+.subtitle { color: #8493a5; }
+
+.panel {
+  background: #121b29;
+  border: 1px solid #26384d;
+  border-radius: 14px;
+  padding: 20px;
+  margin: 15px 0;
+}
+
+.rank {
+  color: #48d9ff;
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.bar {
+  height: 13px;
+  background: #29384a;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.progress {
+  height: 100%;
+  width: 0%;
+  background: #48d9ff;
+  transition: width .3s;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  margin: 15px 0;
+}
+
+.mission {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #29384a;
+  padding: 13px 0;
+}
+
+button {
+  background: #087da7;
+  color: white;
+  border: 0;
+  padding: 12px;
+  border-radius: 9px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  background: #344352;
+  color: #aab5c0;
+}
+
+#reset {
+  background: #8c2538;
+  width: 100%;
+  margin-top: 12px;
+}
+
+small { color: #9cabbc; }
+
+#message {
+  color: #48d9ff;
+  margin-top: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>AWAKENING</h1>
+  <div class="subtitle">SEU DESPERTAR COMEÇA AGORA</div>
+</header>
+
+<div class="panel">
+  <small>JOGADOR</small>
+  <h2>CAÇADOR</h2>
+  <div class="rank" id="rank">RANK E</div>
+  <h3 id="level">NÍVEL 1 | 0 XP</h3>
+  <small id="next">100 XP para o próximo nível</small>
+  <div class="bar">
+    <div class="progress" id="progress"></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h3>ATRIBUTOS</h3>
+  <div class="stat"><span>Força</span><b id="strength">1</b></div>
+  <div class="stat"><span>Resistência</span><b id="resistance">1</b></div>
+  <div class="stat"><span>Inteligência</span><b id="intelligence">1</b></div>
+  <div class="stat"><span>Disciplina</span><b id="discipline">1</b></div>
+</div>
+
+<div class="panel">
+  <h3>MISSÕES DIÁRIAS</h3>
+
+  <div class="mission">
+    <span>Exercício físico</span>
+    <button onclick="completeMission(0)">Concluir +20 XP</button>
+  </div>
+
+  <div class="mission">
+    <span>Leitura e estudo</span>
+    <button onclick="completeMission(1)">Concluir +20 XP</button>
+  </div>
+
+  <div class="mission">
+    <span>Organizar o dia</span>
+    <button onclick="completeMission(2)">Concluir +20 XP</button>
+  </div>
+
+  <div class="mission">
+    <span>Disciplina pessoal</span>
+    <button onclick="completeMission(3)">Concluir +20 XP</button>
+  </div>
+
+  <div id="message">O sistema está aguardando sua evolução.</div>
+</div>
+
+<div class="panel">
+  <h3>STATUS DO SISTEMA</h3>
+  <p>O sistema está aguardando sua evolução.</p>
+  <button id="reset" onclick="resetSystem()">REINICIAR PROGRESSO</button>
+</div>
+
+<script>
+const missions = ["strength", "intelligence", "resistance", "discipline"];
+
+let data;
+
+try {
+  data = JSON.parse(localStorage.getItem("awakening"));
+} catch (e) {
+  data = null;
+}
+
+if (!data || typeof data !== "object") {
+  data = {
+    xp: 0,
+    level: 1,
+    done: [],
+    strength: 1,
+    resistance: 1,
+    intelligence: 1,
+    discipline: 1,
+    date: new Date().toLocaleDateString("en-CA")
+  };
+}
+
+const today = new Date().toLocaleDateString("en-CA");
+
+if (data.date !== today) {
+  data.done = [];
+  data.date = today;
+}
+
+function save() {
+  localStorage.setItem("awakening", JSON.stringify(data));
+  render();
+}
+
+function completeMission(index) {
+  if (data.done.includes(index)) return;
+
+  data.done.push(index);
+  data.xp += 20;
+  data[missions[index]] += 1;
+
+  data.level = Math.floor(data.xp / 100) + 1;
+
+  save();
+}
+
+function render() {
+  document.getElementById("level").textContent =
+    "NÍVEL " + data.level + " | " + data.xp + " XP";
+
+  document.getElementById("next").textContent =
+    (100 - data.xp % 100) + " XP para o próximo nível";
+
+  document.getElementById("progress").style.width =
+    (data.xp % 100) + "%";
+
+  let rank = "E";
+  if (data.level >= 50) rank = "S";
+  else if (data.level >= 30) rank = "A";
+  else if (data.level >= 20) rank = "B";
+  else if (data.level >= 10) rank = "C";
+  else if (data.level >= 5) rank = "D";
+
+  document.getElementById("rank").textContent = "RANK " + rank;
+
+  ["strength", "resistance", "intelligence", "discipline"]
+    .forEach(key => {
+      document.getElementById(key).textContent = data[key];
+    });
+
+  document.querySelectorAll(".mission button").forEach((button, i) => {
+    button.disabled = data.done.includes(i);
+    button.textContent = data.done.includes(i)
+      ? "CONCLUÍDA"
+      : "Concluir +20 XP";
+  });
+
+  document.getElementById("message").textContent =
+    "Missões concluídas hoje: " + data.done.length + "/4";
+}
+
+function resetSystem() {
+  if (confirm("Deseja apagar todo o progresso?")) {
+    data = {
+      xp: 0,
+      level: 1,
+      done: [],
+      strength: 1,
+      resistance: 1,
+      intelligence: 1,
+      discipline: 1,
+      date: today
+    };
+    save();
+  }
+}
+
+save();
+</script>
+
+</body>
+</html>
